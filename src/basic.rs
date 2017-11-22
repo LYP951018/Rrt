@@ -1,79 +1,47 @@
+extern crate image;
 
 use std::ops::*;
 use std::iter::*;
 
-#[derive(Debug)]
-pub struct Rgb {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-}
-
-impl Mul<f32> for Rgb {
-    type Output = Rgb;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        Rgb {
-            r: self.r * rhs,
-            g: self.g * rhs,
-            b: self.b * rhs,
-        }
-    }
-}
-
-impl Div<f32> for Rgb {
-    type Output = Rgb;
-
-    fn div(self, rhs: f32) -> Self::Output {
-        self * (1.0 / rhs)
-    }
-}
-
-impl Rgb {
-    fn black() -> Rgb {
-        Rgb {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-        }
-    }
-}
+use self::image::Rgb;
 
 #[derive(Debug, Clone)]
 pub struct Vector3 {
     pub data: [f32; 3],
 }
 
+type Color = Rgb<f32>;
+
 impl Vector3 {
-    fn from_xyz(x: f32, y: f32, z: f32) -> Vector3 {
+    pub fn from_xyz(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { data: [x, y, z] }
     }
 
-    fn zero() -> Vector3 {
+    pub fn zero() -> Vector3 {
         Self::from_xyz(0.0, 0.0, 0.0)
     }
 
-    fn x(&self) -> f32 {
+    pub fn x(&self) -> f32 {
         self.data[0]
     }
 
-    fn y(&self) -> f32 {
+    pub fn y(&self) -> f32 {
         self.data[1]
     }
 
-    fn z(&self) -> f32 {
+    pub fn z(&self) -> f32 {
         self.data[2]
     }
 
-    fn length(&self) -> f32 {
+    pub fn length(&self) -> f32 {
         self.squared_len().sqrt()
     }
 
-    fn squared_len(&self) -> f32 {
+    pub fn squared_len(&self) -> f32 {
         self.data.iter().map(|x| x.powi(2)).sum::<f32>()
     }
 
-    fn dot(&self, rhs: &Self) -> f32 {
+    pub fn dot(&self, rhs: &Self) -> f32 {
         self.data
             .iter()
             .zip(rhs.data.iter())
@@ -81,12 +49,12 @@ impl Vector3 {
             .sum::<f32>()
     }
 
-    fn unit(&self) -> Vector3 {
+    pub fn unit(&self) -> Vector3 {
         let len = self.length();
         Vector3::from_xyz(self.x() / len, self.y() / len, self.z() / len)
     }
 
-    fn cross(&self, rhs: &Vector3) -> Vector3 {
+    pub fn cross(&self, rhs: &Vector3) -> Vector3 {
         Vector3 {
             data: [
                 self.y() * rhs.z() - self.z() - rhs.y(),
@@ -188,7 +156,7 @@ pub struct Ray {
 pub struct HitRecord {
     pub t: f32,
     pub normal: Vector3,
-    //pub rgb: Rgb,
+    pub color: Color,
 }
 
 pub trait Shape {
@@ -199,6 +167,22 @@ pub struct Triangle {
     pub p0: Vector3,
     pub p1: Vector3,
     pub p2: Vector3,
+    pub color: Color
+}
+
+impl Triangle {
+    pub fn new(p0: Vector3, p1: Vector3, p2: Vector3, color: Color) -> Self {
+        Triangle {
+            p0: p0.clone(),
+            p1: p1.clone(),
+            p2: p2.clone(),
+            color
+        }
+    }
+
+    pub fn with_pos(p0: Vector3, p1: Vector3, p2: Vector3) -> Self {
+        Triangle::new(p0, p1, p2, Color {data: [0.0, 0.0, 0.0]})
+    }
 }
 
 impl Shape for Triangle {
@@ -243,6 +227,7 @@ impl Shape for Triangle {
                     Some(HitRecord {
                         t: tval,
                         normal: ((&self.p1 - &self.p0).cross(&vec)).unit(),
+                        color: self.color.clone()
                     })
                 } else {
                     None
@@ -253,8 +238,17 @@ impl Shape for Triangle {
 }
 
 pub struct Sphere {
-    center: Vector3,
-    radius: f32
+    pub center: Vector3,
+    pub radius: f32,
+    pub color: Color
+}
+
+impl Sphere {
+    pub fn new(center: Vector3, radius: f32, color: Color) -> Self {
+        Sphere {
+            center, radius, color
+        }
+    }
 }
 
 impl Shape for Sphere {
@@ -286,12 +280,12 @@ impl Shape for Sphere {
                 let normal = normal.unit();
                 Some(HitRecord {
                     t,
-                    normal
+                    normal,
+                    color: self.color.clone()
                 })
             }           
         } else {
             None
-        }
-        
+        }      
     }
 }

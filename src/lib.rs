@@ -1,6 +1,6 @@
 mod basic;
 
-pub use basic::Rgb;
+pub use basic::*;
 
 
 #[cfg(test)]

@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["刘雨培 <liuyupei951018@hotmail.com>"]
 
 [dependencies]
+image = "*"
