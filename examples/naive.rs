@@ -1,19 +1,22 @@
 extern crate rrt;
 extern crate image;
 
-use image::{GenericImage, ImageBuffer, Rgb};
+use image::{GenericImage, ImageBuffer};
 
 use rrt::*;
+use std::fs::File;
 
 fn main() {
     let mut shapes: Vec<Box<Shape>> = Vec::new();
     shapes.push(Box::new(Sphere::new(Vector3::from_xyz(250.0, 250.0, -1000.0), 150.0, Rgb::new(0.2, 0.2, 0.8))));
+    
     shapes.push(Box::new(Triangle::new(
         Vector3::from_xyz(300.0, 600.0, -800.0),
         Vector3::from_xyz(0.0, 100.0, -1000.0),
         Vector3::from_xyz(450.0, 20.0, -1000.0),
         Rgb::new(0.8, 0.2, 0.2))
     ));
+    
 
     let img = ImageBuffer::from_fn(500, 500, |x, y| {
         let ray = Ray {
@@ -22,12 +25,14 @@ fn main() {
         };
         for shape in &shapes {
             let shape = &*shape;
-            if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0) {
-                return image::RGB(hit.color.r, hit.color.g, hit.color.b)
+            if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, 0.0) {
+                return image::Rgb::from(hit.color);
             } else {
-                return image::RGB(0)
+                continue;
             }
         }
+        image::Rgb::from(Rgb::black())
     });
-
+     let mut out = File::create("test.png").unwrap();
+     image::ImageRgb8(img).save(&mut out, image::PNG).unwrap();
 }
