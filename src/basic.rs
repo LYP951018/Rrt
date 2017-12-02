@@ -9,6 +9,8 @@ pub struct Vector3 {
     pub data: [f32; 3],
 }
 
+pub type Vector2 = (f32, f32);
+
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
     pub r: f32,
