@@ -25,6 +25,15 @@ pub fn jitter(samples: u32) -> Vec<Vector2> {
 }
 
 pub fn nrooks(samples: u32) -> Vec<Vector2> {
-    
-
+    let rng = rand::thread_rng();
+    let mut result = Vec::new();
+    let sf = samples as f32;
+    for i in 0..samples {
+        let i = i as f32;
+        let x = (i + rng.gen_range(0.0, 1.0)) / sf;
+        let y = (i + rng.gen_range(0.0, 1.0)) / sf;
+        result.push((x, y));
+    }
+    rng.shuffle(&mut result);
+    result
 }
