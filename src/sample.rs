@@ -25,7 +25,7 @@ pub fn jitter(samples: u32) -> Vec<Vector2> {
 }
 
 pub fn nrooks(samples: u32) -> Vec<Vector2> {
-    let rng = rand::thread_rng();
+    let mut rng = rand::thread_rng();
     let mut result = Vec::new();
     let sf = samples as f32;
     for i in 0..samples {
