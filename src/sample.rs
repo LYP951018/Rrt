@@ -37,3 +37,9 @@ pub fn nrooks(samples: u32) -> Vec<Vector2> {
     rng.shuffle(&mut result);
     result
 }
+
+pub fn box_filter(samples: &mut Vec<Vector2>) {
+    for sample in samples {
+        *sample = (sample.0 - 0.5, sample.1 - 0.5)
+    }
+}

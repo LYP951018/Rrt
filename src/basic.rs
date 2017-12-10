@@ -4,7 +4,7 @@ use std::ops::*;
 use std::iter::*;
 use std::u8;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Vector3 {
     pub data: [f32; 3],
 }
@@ -66,12 +66,12 @@ impl From<Rgb> for image::Rgb<u8> {
 }
 
 impl Vector3 {
-    pub fn from_xyz(x: f32, y: f32, z: f32) -> Vector3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { data: [x, y, z] }
     }
 
     pub fn zero() -> Vector3 {
-        Self::from_xyz(0.0, 0.0, 0.0)
+        Self::new(0.0, 0.0, 0.0)
     }
 
     pub fn x(&self) -> f32 {
@@ -104,7 +104,7 @@ impl Vector3 {
 
     pub fn unit(&self) -> Vector3 {
         let len = self.length();
-        Vector3::from_xyz(self.x() / len, self.y() / len, self.z() / len)
+        Vector3::new(self.x() / len, self.y() / len, self.z() / len)
     }
 
     pub fn cross(&self, rhs: &Vector3) -> Vector3 {
@@ -122,7 +122,7 @@ impl<'a, 'b> Sub<&'b Vector3> for &'a Vector3 {
     type Output = Vector3;
 
     fn sub(self, rhs: &'b Vector3) -> Self::Output {
-        Vector3::from_xyz(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
+        Vector3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
     }
 }
 
@@ -138,7 +138,7 @@ impl<'a, 'b> Add<&'b Vector3> for &'a Vector3 {
     type Output = Vector3;
 
     fn add(self, rhs: &'b Vector3) -> Self::Output {
-        Vector3::from_xyz(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
+        Vector3::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
@@ -154,7 +154,7 @@ impl Mul<f32> for Vector3 {
     type Output = Vector3;
 
     fn mul(self, scale: f32) -> Self::Output {
-        Vector3::from_xyz(self.x() * scale, self.y() * scale, self.z() * scale)
+        Vector3::new(self.x() * scale, self.y() * scale, self.z() * scale)
     }
 }
 
@@ -176,8 +176,8 @@ impl Onb {
     const ONBEPSILON: f32 = 0.01;
 
     fn from_u(u: Vector3) -> Onb {
-        let n = Vector3::from_xyz(1.0, 0.0, 0.0);
-        let m = Vector3::from_xyz(0.0, 1.0, 0.0);
+        let n = Vector3::new(1.0, 0.0, 0.0);
+        let m = Vector3::new(0.0, 1.0, 0.0);
         let normalized_u = u.unit();
         let temp_v = normalized_u.cross(&n);
         let v = if temp_v.length() < Self::ONBEPSILON {
@@ -340,5 +340,44 @@ impl Shape for Sphere {
         } else {
             None
         }      
+    }
+}
+
+struct ThinLens {
+    radius: f32,
+    center: Vector3,
+    focal_length: f32
+}
+
+impl ThinLens {
+    fn new(radius: f32, center: Vector3, focalLength: f32) -> ThinLens {
+        ThinLens {
+            radius, center, focal_length: focalLength
+        }
+    }
+
+    fn refract(&self, ray: &mut Ray, hitPos: Vector3, s: f32) {
+        let i = s * self.focal_length / (s - self.focal_length);
+        let dir = (&self.center - &ray.origin);
+        let distance = dir.length() * s / i;
+        let dest = self.center.clone() + dir.unit() * distance;
+        ray.origin = hitPos.clone();
+        ray.direction = (&dest - &hitPos).unit();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use basic::*;
+    #[test]
+    fn refract_tests() {
+        let thinLens = ThinLens::new(20.0, Vector3::zero(), 5.0);
+        let mut ray = Ray {
+            origin: Vector3::new(10.0, 0.0, 0.0),
+            direction: Vector3::new(-1.0, 0.0, 0.0)
+        };
+        thinLens.refract(&mut ray, Vector3::zero(), 10.0);
+        assert_eq!(ray.origin, Vector3::zero());
+        assert_eq!(ray.direction, Vector3::new(-1.0, 0.0, 0.0));
     }
 }
