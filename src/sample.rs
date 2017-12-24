@@ -2,6 +2,7 @@ extern crate rand;
 
 use basic::Vector2;
 use sample::rand::Rng;
+use std::iter::repeat;
 
 pub fn random(samples: u32) -> Vec<Vector2> {
     rand::thread_rng().gen_iter().take(samples as usize).collect()
@@ -25,7 +26,7 @@ pub fn jitter(samples: u32) -> Vec<Vector2> {
 }
 
 pub fn nrooks(samples: u32) -> Vec<Vector2> {
-    let rng = rand::thread_rng();
+    let mut rng = rand::thread_rng();
     let mut result = Vec::new();
     let sf = samples as f32;
     for i in 0..samples {
@@ -36,4 +37,8 @@ pub fn nrooks(samples: u32) -> Vec<Vector2> {
     }
     rng.shuffle(&mut result);
     result
+}
+
+pub fn box_filter(samples: u32) -> Vec<f32> {
+    repeat(1.0 / (samples as f32)).take(samples as usize).collect()
 }
