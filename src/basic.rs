@@ -3,8 +3,9 @@ extern crate image;
 use std::ops::*;
 use std::iter::*;
 use std::u8;
+use std::f32;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Vector3 {
     pub data: [f32; 3],
 }
@@ -66,12 +67,36 @@ impl From<Rgb> for image::Rgb<u8> {
 }
 
 impl Vector3 {
-    pub fn from_xyz(x: f32, y: f32, z: f32) -> Vector3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { data: [x, y, z] }
     }
 
     pub fn zero() -> Vector3 {
-        Self::from_xyz(0.0, 0.0, 0.0)
+        Self::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn back() -> Vector3 {
+        Self::new(0.0, 0.0, -1.0)
+    }
+
+    pub fn up() -> Vector3 {
+        Self::new(0.0, 1.0, 0.0)
+    }
+
+    pub fn down() -> Vector3 {
+        Self::new(0.0, -1.0, 0.0)
+    }
+
+    pub fn forward() -> Vector3 {
+        Self::new(0.0, 0.0, 1.0)
+    }
+
+    pub fn left() -> Vector3 {
+        Self::new(-1.0, 0.0, 0.0)
+    }
+
+    pub fn one() -> Vector3 {
+        Self::new(1.0, 1.0, 1.0)
     }
 
     pub fn x(&self) -> f32 {
@@ -104,25 +129,26 @@ impl Vector3 {
 
     pub fn unit(&self) -> Vector3 {
         let len = self.length();
-        Vector3::from_xyz(self.x() / len, self.y() / len, self.z() / len)
+        Vector3::new(self.x() / len, self.y() / len, self.z() / len)
     }
 
     pub fn cross(&self, rhs: &Vector3) -> Vector3 {
         Vector3 {
             data: [
-                self.y() * rhs.z() - self.z() - rhs.y(),
-                self.z() * rhs.x() - self.x() - rhs.z(),
-                self.x() * rhs.y() - self.y() - rhs.x(),
+                self.y() * rhs.z() - self.z() * rhs.y(),
+                self.z() * rhs.x() - self.x() * rhs.z(),
+                self.x() * rhs.y() - self.y() * rhs.x(),
             ],
         }
     }
 }
 
+//& - &
 impl<'a, 'b> Sub<&'b Vector3> for &'a Vector3 {
     type Output = Vector3;
 
     fn sub(self, rhs: &'b Vector3) -> Self::Output {
-        Vector3::from_xyz(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
+        Vector3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
     }
 }
 
@@ -138,7 +164,7 @@ impl<'a, 'b> Add<&'b Vector3> for &'a Vector3 {
     type Output = Vector3;
 
     fn add(self, rhs: &'b Vector3) -> Self::Output {
-        Vector3::from_xyz(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
+        Vector3::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
@@ -150,11 +176,20 @@ impl Add for Vector3 {
     }
 }
 
-impl Mul<f32> for Vector3 {
+impl<'a> Add<&'a Vector3> for Vector3 {
+    type Output = Vector3;
+
+    fn add(self, rhs: &'a Vector3) -> Self::Output {
+        &self + rhs
+    }
+}
+
+//& * f32
+impl<'a> Mul<f32> for &'a Vector3 {
     type Output = Vector3;
 
     fn mul(self, scale: f32) -> Self::Output {
-        Vector3::from_xyz(self.x() * scale, self.y() * scale, self.z() * scale)
+        Vector3::new(self.x() * scale, self.y() * scale, self.z() * scale)
     }
 }
 
@@ -162,7 +197,7 @@ impl Mul<Vector3> for f32 {
     type Output = Vector3;
 
     fn mul(self, rhs: Vector3) -> Self::Output {
-        rhs * self
+        &rhs * self
     }
 }
 
@@ -170,35 +205,6 @@ struct Onb {
     u: Vector3,
     v: Vector3,
     w: Vector3,
-}
-
-impl Onb {
-    const ONBEPSILON: f32 = 0.01;
-
-    fn from_u(u: Vector3) -> Onb {
-        let n = Vector3::from_xyz(1.0, 0.0, 0.0);
-        let m = Vector3::from_xyz(0.0, 1.0, 0.0);
-        let normalized_u = u.unit();
-        let temp_v = normalized_u.cross(&n);
-        let v = if temp_v.length() < Self::ONBEPSILON {
-            normalized_u.cross(&m)
-        } else {
-            temp_v
-        };
-        let w = v.cross(&u);
-        Onb { u, v, w }
-    }
-
-    fn from_uv(u: Vector3, v: Vector3) -> Onb {
-        let fu = u.unit();
-        let fv = v.unit();
-        let normal = fu.cross(&fv);
-        Onb {
-            u: fu,
-            v: normal,
-            w: u.cross(&v),
-        }
-    }
 }
 
 pub struct Ray {
@@ -340,5 +346,98 @@ impl Shape for Sphere {
         } else {
             None
         }      
+    }
+}
+
+#[derive(Debug)]
+pub struct ThinLens {
+    radius: f32,
+    center: Vector3,
+    focal_length: f32
+}
+
+impl ThinLens {
+    pub fn new(radius: f32, center: Vector3, focal_length: f32) -> ThinLens {
+        ThinLens {
+            radius, center, focal_length
+        }
+    }
+
+    pub fn refract(&self, ray: &Ray, hit_pos: Vector3, s: f32) -> Ray {
+        let i = s * self.focal_length / (s - self.focal_length);
+        let dir = &self.center - &ray.origin;
+        let distance = dir.length() * s / i;
+        let dest = &dir.unit() * distance + &self.center;
+        Ray {
+            origin: hit_pos.clone(),
+            direction: (&dest - &hit_pos).unit()
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Camera {
+    lens: ThinLens,
+    u: Vector3,
+    v: Vector3,
+    n: Vector3,
+    origin: Vector3,
+    left_bottom: Vector3
+}
+
+impl Camera {
+    pub fn new(lens: ThinLens, at: Vector3, target: Vector3, up: Vector3, aspect_ratio: f32, fov: f32, dist: f32) -> Camera {
+        let up = up.unit();
+        let n = (&target - &at).unit();
+        let u = n.cross(&up);
+        let v = u.cross(&n);    
+        let origin = &at + &(&n * dist);
+        let half_width = fov.tan();
+        let half_height = half_width / aspect_ratio;
+        let left_bottom = &(&origin - &(&u * half_width)) - &(&v * half_height);
+        Camera {
+            lens,
+            u, v, n,
+            origin: at,
+            left_bottom
+        }
+    }
+
+    ///`x`, `y`: pixel coord.
+    pub fn gen_ray(&self, x: f32, y: f32, lens_x: f32, lens_y: f32, s: f32) -> Ray {
+        //1. transform pixel coord to world.
+        //println!("v: {:?}", self.v);     
+        let pos = &self.left_bottom + &(&self.u * x) + &(&self.v * y);
+        let lens = &self.lens;
+        let ux = lens_x * lens.radius;
+        let uy = lens_y * lens.radius;
+        let lens_pos = &lens.center + &(&self.u * ux) + &self.v * uy;
+        let new_dir = (&lens_pos - &pos).unit();
+        lens.refract(
+            &Ray {
+           origin: pos,
+           direction: new_dir
+        }, lens_pos, s)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use basic::*;
+    #[test]
+    fn refract_tests() {
+        let thinLens = ThinLens::new(20.0, Vector3::zero(), 5.0);
+        let mut ray = Ray {
+            origin: Vector3::new(0.0, 0.0, 2.0),
+            direction: Vector3::new(-1.0, 0.0, 0.0)
+        };
+        let ray = thinLens.refract(&ray, Vector3::zero(), 10.0);
+        assert_eq!(ray.origin, Vector3::zero());
+        assert_eq!(ray.direction, Vector3::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn vector_tests() {
+        assert_eq!(Vector3::new(0.0, 0.0, -1.0).cross(&Vector3::new(0.0, 1.0, 0.0)), Vector3::new(1.0, 0.0, 0.0));
     }
 }

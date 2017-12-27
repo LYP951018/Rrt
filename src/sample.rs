@@ -39,6 +39,8 @@ pub fn nrooks(samples: u32) -> Vec<Vector2> {
     result
 }
 
-pub fn box_filter(samples: u32) -> Vec<f32> {
-    repeat(1.0 / (samples as f32)).take(samples as usize).collect()
+pub fn box_filter(samples: &mut Vec<Vector2>) {
+    for sample in samples {
+        *sample = (sample.0 - 0.5, sample.1 - 0.5)
+    }
 }
