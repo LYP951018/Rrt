@@ -5,21 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "windbg",
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
             "request": "launch",
-            "name": "Launch Program",
-            "target": "${workspaceFolder}/target/debug/examples/motion_blur.exe"
-        },
-    {
-        "name": "(Windows) Launch",
-        "type": "cppvsdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/target/debug/examples/motion_blur.exe",
-        "args": [],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": true
-    }
+            "program": "${workspaceFolder}/target/debug/examples/motion_blur.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true
+        }
     ]
 }
