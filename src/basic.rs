@@ -207,11 +207,13 @@ struct Onb {
     w: Vector3,
 }
 
+#[derive(Debug)]
 pub struct Ray {
     pub origin: Vector3,
     pub direction: Vector3,
 }
 
+#[derive(Debug)]
 pub struct HitRecord {
     pub t: f32,
     pub normal: Vector3,
@@ -391,10 +393,11 @@ impl Camera {
         let n = (&target - &at).unit();
         let u = n.cross(&up);
         let v = u.cross(&n);    
-        let origin = &at + &(&n * dist);
+        let origin = &at - &(&n * dist);
         let half_width = fov.tan();
         let half_height = half_width / aspect_ratio;
         let left_bottom = &(&origin - &(&u * half_width)) - &(&v * half_height);
+        println!("{:?}", left_bottom);
         Camera {
             lens,
             u, v, n,
@@ -411,7 +414,7 @@ impl Camera {
         let lens = &self.lens;
         let ux = lens_x * lens.radius;
         let uy = lens_y * lens.radius;
-        let lens_pos = &lens.center + &(&self.u * ux) + &self.v * uy;
+        let lens_pos = &self.u * ux + &self.v * uy + &lens.center;
         let new_dir = (&lens_pos - &pos).unit();
         lens.refract(
             &Ray {

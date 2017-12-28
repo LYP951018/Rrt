@@ -13,17 +13,19 @@ fn main() {
         Vector3::zero(), 
         Vector3::back(), Vector3::up(), 1.0, f32::consts::PI / 4.0, 2.0);
     let mut shapes: Vec<Box<Shape>> = Vec::new();
-    shapes.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -20.0), 100.0, Rgb::new(0.2, 0.2, 0.8))));
+    shapes.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -5.0), 2.0, Rgb::new(0.2, 0.2, 0.8))));
     let mut rng = rand::thread_rng();
 
     let img = ImageBuffer::from_fn(500, 500, |x, y| {
-        let transform = |x: f32| x * 2.0 - 1.0;        
-        let len_pos_x = transform(rng.gen_range(0.0, 1.0));
-        let len_pos_y = transform(rng.gen_range(0.0, 1.0));
-
+        let transform = |x: f32| x * 2.0 - 1.0;      
+        //rng.gen_range(0.0, 1.0)  
+        let len_pos_x = transform(0.5);
+        let len_pos_y = transform(0.5);
         for shape in &shapes {
             let shape = &*shape;
-            if let Some(hit) = shape.hit(&camera.gen_ray(x as f32 / 500.0, y as f32 / 500.0, len_pos_x, len_pos_y, 2.0), 0.00001, 1000.0, 0.0) {
+            let ray = camera.gen_ray(x as f32 / 500.0 * 2.0, y as f32 / 500.0 * 2.0, len_pos_x, len_pos_y, 2.0);
+            if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, 0.0) {
+               // println!("{:?}", hit);
                 return image::Rgb::from(hit.color);
             } else {
                 continue;
