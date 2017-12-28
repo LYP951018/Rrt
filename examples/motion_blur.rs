@@ -5,7 +5,6 @@ extern crate rand;
 use image::{GenericImage, ImageBuffer};
 use rand::Rng;
 use std::f32;
-
 use rrt::*;
 use std::fs::File;
 

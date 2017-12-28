@@ -6,3 +6,4 @@ authors = ["刘雨培 <liuyupei951018@hotmail.com>"]
 [dependencies]
 image = "*"
 rand = "0.3"
+lazy_static = "1.0"

@@ -437,7 +437,20 @@ mod tests {
     }
 
     #[test]
+    fn refract_tests_normal() {
+        let thinLens = ThinLens::new(20.0, Vector3::zero(), 2.5);
+        let mut ray = Ray {
+            origin: Vector3::new(5.0, 5.0, 0.0),
+            direction: Vector3::new(-1.0, 0.0, 0.0),
+        };
+        let ray = thinLens.refract(&ray, Vector3::new(0.0, 5.0, 0.0), 5.0);
+        assert_eq!(ray.origin, Vector3::new(0.0, 5.0, 0.0));
+        assert_eq!(ray.direction, Vector3::new(-5.0, -10.0, 0.0).unit());
+    }
+
+    #[test]
     fn vector_tests() {
         assert_eq!(Vector3::new(0.0, 0.0, -1.0).cross(&Vector3::new(0.0, 1.0, 0.0)), Vector3::new(1.0, 0.0, 0.0));
     }
 }
+
