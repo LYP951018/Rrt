@@ -1,38 +1,75 @@
-extern crate rrt;
 extern crate image;
 extern crate rand;
+extern crate rrt;
 
-use image::{GenericImage, ImageBuffer};
+use image::ImageBuffer;
 use rand::Rng;
-use std::f32;
 use rrt::*;
+use std::f32;
 use std::fs::File;
+use std::iter::*;
+
+fn color(camera: &Camera, shapes: &[Box<Shape>], pixel: Vector2, lens: Vector2) -> Rgb {
+    for shape in shapes {
+        let ray = camera.gen_ray(&pixel, &lens, 2.0);
+        if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, 0.0) {
+            // println!("{:?}", hit);
+            return hit.color;
+        }
+    }
+    Rgb::black()
+}
+
+const SAMPLE_COUNT: u32 = 64;
+
+fn sampling<T: Rng>(
+    rng: &mut T,
+    camera: &Camera,
+    shapes: &[Box<Shape>],
+    x: u32,
+    y: u32,
+) -> image::Rgb<u8> {
+    let mut pixels = Vec::new();
+    let mut lens = Vec::new();
+
+    sample::jitter(rng, &mut pixels, SAMPLE_COUNT);
+    sample::jitter(rng, &mut lens, SAMPLE_COUNT);
+
+    rng.shuffle(&mut pixels);
+    rng.shuffle(&mut lens);
+
+    let pixel_trans = Vector2::new(x as f32, y as f32);
+    image::Rgb::from(
+        pixels
+            .into_iter()
+            .map(|x| (x + pixel_trans) / 250.0)
+            .zip(lens.into_iter().map(|y| y.to_center()))
+            .map(|(p, l)| color(camera, shapes, p, l))
+            .fold(Rgb::black(), |l, r| l + r) / (SAMPLE_COUNT as f32)
+    )
+}
 
 fn main() {
-    let camera = Camera::new(ThinLens::new(1.0, Vector3::zero(), 1.0), 
-        Vector3::zero(), 
-        Vector3::back(), Vector3::up(), 1.0, f32::consts::PI / 4.0, 2.0);
+    let camera = CameraBuilder {
+        lens: ThinLens::new(1.0, Vector3::zero(), 1.0),
+        at: Vector3::zero(),
+        target: Vector3::back(),
+        up: Vector3::up(),
+        aspect_ratio: 1.0,
+        fov: f32::consts::PI / 4.0,
+        dist: 2.0,
+    }.build();
+
     let mut shapes: Vec<Box<Shape>> = Vec::new();
-    shapes.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -5.0), 2.0, Rgb::new(0.2, 0.2, 0.8))));
+    shapes.push(Box::new(Sphere::new(
+        Vector3::new(0.0, 0.0, -3.0),
+        1.0,
+        Rgb::new(0.2, 0.2, 0.8),
+    )));
+
     let mut rng = rand::thread_rng();
 
-    let img = ImageBuffer::from_fn(500, 500, |x, y| {
-        let transform = |x: f32| x * 2.0 - 1.0;      
-        //rng.gen_range(0.0, 1.0)  
-        let len_pos_x = transform(0.5);
-        let len_pos_y = transform(0.5);
-        for shape in &shapes {
-            let shape = &*shape;
-            let ray = camera.gen_ray(x as f32 / 500.0 * 2.0, y as f32 / 500.0 * 2.0, len_pos_x, len_pos_y, 2.0);
-            if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, 0.0) {
-               // println!("{:?}", hit);
-                return image::Rgb::from(hit.color);
-            } else {
-                continue;
-            }
-        }
-        image::Rgb::from(Rgb::black())
-    });
+    let img = ImageBuffer::from_fn(500, 500, |x, y| sampling(&mut rng, &camera, &shapes, x, y));
     let mut out = File::create("motion_blur.png").unwrap();
-    image::ImageRgb8(img).save(&mut out, image::PNG);
+    image::ImageRgb8(img).save(&mut out, image::PNG).unwrap();
 }
