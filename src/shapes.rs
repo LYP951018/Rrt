@@ -15,7 +15,7 @@ pub struct HitRecord {
 }
 
 pub trait Shape {
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, time: f32) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord>;
 }
 
 pub struct Triangle {
@@ -41,7 +41,7 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, _time: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord> {
         let a = self.p0.x - self.p1.x;
         let b = self.p0.y - self.p1.y;
         let c = self.p0.z - self.p1.z;
@@ -92,6 +92,7 @@ impl Shape for Triangle {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Sphere {
     pub center: Vector3,
     pub radius: f32,
@@ -114,8 +115,9 @@ impl Shape for Sphere {
     // (o + td - c) . (o + td - c) - R^2 = 0
     // solve the equation.
     // normal:
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, _time: f32) -> Option<HitRecord> {
-        let temp = &ray.origin - &self.center;
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord> {
+        let new_center = self.center + translation;
+        let temp = &ray.origin - &new_center;
 
         let a = ray.direction.dot(&ray.direction);
         let b = 2.0 * ray.direction.dot(&temp);
@@ -133,7 +135,7 @@ impl Shape for Sphere {
             } else {
                 let dir = t * &ray.direction;
                 let point = &ray.origin + &dir;
-                let normal = &point - &self.center;
+                let normal = &point - &new_center;
                 let normal = normal.unit();
                 Some(HitRecord {
                     t,

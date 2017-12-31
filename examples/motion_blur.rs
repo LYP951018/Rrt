@@ -9,12 +9,23 @@ use std::f32;
 use std::fs::File;
 use std::iter::*;
 
+const MOVE_TIMES: u32 = 50;
+
 fn color(camera: &Camera, shapes: &[Box<Shape>], pixel: Vector2, lens: Vector2) -> Rgb {
+    let dir = Vector3::new(0.005, 0.0, 0.0);
+    let ray = camera.gen_ray(&pixel, &lens);
     for shape in shapes {
-        let ray = camera.gen_ray(&pixel, &lens, 2.0);
-        if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, 0.0) {
-            // println!("{:?}", hit);
-            return hit.color;
+        let mut total = Rgb::black();
+        let mut hitted = false;
+        for t in 0..MOVE_TIMES {
+            if let Some(hit) = shape.hit(&ray, 0.00001, 1000.0, &(dir * (t as f32))) {
+                // println!("{:?}", hit);
+                total = &total + hit.color;
+                hitted = true;
+            }
+        }
+        if hitted {
+            return total / (MOVE_TIMES as f32);
         }
     }
     Rgb::black()
@@ -45,25 +56,28 @@ fn sampling<T: Rng>(
             .map(|x| (x + pixel_trans) / 250.0)
             .zip(lens.into_iter().map(|y| y.to_center()))
             .map(|(p, l)| color(camera, shapes, p, l))
-            .fold(Rgb::black(), |l, r| l + r) / (SAMPLE_COUNT as f32)
+            .fold(Rgb::black(), |l, r| l + r) / (SAMPLE_COUNT as f32),
     )
 }
 
 fn main() {
     let camera = CameraBuilder {
-        lens: ThinLens::new(1.0, Vector3::zero(), 1.0),
+        lens: ThinLens {
+            radius: 1.0,
+            center: Vector3::zero(),
+            focal_length: 1.0,
+        },
         at: Vector3::zero(),
         target: Vector3::back(),
         up: Vector3::up(),
         aspect_ratio: 1.0,
         fov: f32::consts::PI / 4.0,
-        dist: 2.0,
     }.build();
 
     let mut shapes: Vec<Box<Shape>> = Vec::new();
     shapes.push(Box::new(Sphere::new(
-        Vector3::new(0.0, 0.0, -3.0),
-        1.0,
+        Vector3::new(0.0, 0.0, -1.01),
+        0.2,
         Rgb::new(0.2, 0.2, 0.8),
     )));
 
