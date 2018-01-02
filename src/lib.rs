@@ -4,9 +4,6 @@ extern crate rand;
 extern crate rand_derive;
 
 #[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
 mod macros;
 pub mod sample;
 pub mod noise;
