@@ -48,6 +48,14 @@ impl Rgb {
         }
     }
 
+    pub fn white() -> Rgb {
+        Rgb {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0
+        }
+    }
+
     pub fn new(r: f32, g: f32, b: f32) -> Rgb {
         Rgb { r, g, b }
     }
