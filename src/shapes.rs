@@ -1,5 +1,7 @@
-use vectors::Vector3;
+use vectors::{Vector3, Vector2};
+use texture::{Texture};
 use rgb::Rgb;
+use std::f32;
 
 #[derive(Debug)]
 pub struct Ray {
@@ -15,7 +17,18 @@ pub struct HitRecord {
 }
 
 pub trait Shape {
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3, texture: &Texture) -> Option<HitRecord>;
+}
+
+pub struct TexedShape {
+    pub texture: Box<Texture>,
+    pub shape: Box<Shape>
+}
+
+impl TexedShape {
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord> {
+        self.shape.hit(ray, tmin, tmax, translation, &*self.texture)
+    }
 }
 
 pub struct Triangle {
@@ -41,7 +54,7 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3, _texture: &Texture) -> Option<HitRecord> {
         let a = self.p0.x - self.p1.x;
         let b = self.p0.y - self.p1.y;
         let c = self.p0.z - self.p1.z;
@@ -96,15 +109,13 @@ impl Shape for Triangle {
 pub struct Sphere {
     pub center: Vector3,
     pub radius: f32,
-    pub color: Rgb,
 }
 
 impl Sphere {
-    pub fn new(center: Vector3, radius: f32, color: Rgb) -> Self {
+    pub fn new(center: Vector3, radius: f32) -> Self {
         Sphere {
             center,
-            radius,
-            color,
+            radius
         }
     }
 }
@@ -115,7 +126,7 @@ impl Shape for Sphere {
     // (o + td - c) . (o + td - c) - R^2 = 0
     // solve the equation.
     // normal:
-    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, translation: &Vector3, texture: &Texture) -> Option<HitRecord> {
         let new_center = self.center + translation;
         let temp = &ray.origin - &new_center;
 
@@ -137,10 +148,13 @@ impl Shape for Sphere {
                 let point = &ray.origin + &dir;
                 let normal = &point - &new_center;
                 let normal = normal.unit();
+                let delta = &point - &new_center;
+                let theta = (delta.z / self.radius).acos();
+                let phi = f32::atan2(delta.y, delta.x);
                 Some(HitRecord {
                     t,
                     normal,
-                    color: self.color.clone(),
+                    color: texture.get_value(&point, &Vector2::new(theta / 2.0 * f32::consts::PI, phi / f32::consts::PI)),
                 })
             }
         } else {

@@ -1,6 +1,6 @@
 extern crate image;
 
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, Sub, Div, Mul};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
@@ -17,7 +17,17 @@ impl<'a, 'b> Add<&'b Rgb> for &'a Rgb {
     }
 }
 
+impl<'a, 'b> Sub<&'b Rgb> for &'a Rgb {
+    type Output = Rgb;
+
+    fn sub(self, rhs: &'b Rgb) -> Self::Output {
+        Rgb::new(self.r - rhs.r, self.g - rhs.g, self.b - rhs.b)
+    }
+}
+
+//TODO: 从语义上说应该只有 Vector3 有这些操作。
 impl_binop!(impl Add add for Rgb);
+impl_binop!(impl Sub sub for Rgb);
 
 impl Mul<f32> for Rgb {
     type Output = Rgb;
@@ -67,5 +77,12 @@ impl From<Rgb> for image::Rgb<u8> {
         image::Rgb {
             data: [r2u8(original.r), r2u8(original.g), r2u8(original.b)],
         }
+    }
+}
+
+impl From<image::Rgb<u8>> for Rgb {
+    fn from(original: image::Rgb<u8>) -> Rgb {
+        let u82r = |u: u8| -> f32 { u as f32 / 255.0 };
+        Rgb::new(u82r(original[0]), u82r(original[1]), u82r(original[2]))
     }
 }
