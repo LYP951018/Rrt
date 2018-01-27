@@ -65,7 +65,7 @@ fn fake_dot(h: u32, x: f32, y: f32, z: f32) -> f32 {
     }
 }
 
-pub fn noise(point: &Vector3) -> f32 {
+pub fn perlin_noise(point: &Vector3) -> f32 {
     let Vector3 { x, y, z } = *point;
     let (floor_x, floor_y, floor_z) = (x.floor(), y.floor(), z.floor());
     let (xi, yi, zi) = (floor_x as u32, floor_y as u32, floor_z as u32);
@@ -101,7 +101,7 @@ struct NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn get_value(&self, pos: &Vector3, _uv: &Vector2) -> Rgb {
-        let noise = noise(&(pos * self.scale));
+        let noise = perlin_noise(&(pos * self.scale));
         lerp(noise, self.start, self.end)
     }
 }

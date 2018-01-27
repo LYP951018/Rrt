@@ -7,3 +7,4 @@ authors = ["刘雨培 <liuyupei951018@hotmail.com>"]
 image = "0.17"
 rand = "0.4"
 rand_derive = "0.3"
+cgmath = "0.16"

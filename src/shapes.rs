@@ -1,4 +1,4 @@
-use vectors::{Vector3, Vector2};
+use vectors::*;
 use texture::{Texture};
 use rgb::Rgb;
 use std::f32;
@@ -94,7 +94,7 @@ impl Shape for Triangle {
                 if tval >= tmin && tval <= tmax {
                     Some(HitRecord {
                         t: tval,
-                        normal: ((&self.p1 - &self.p0).cross(&vec)).unit(),
+                        normal: ((&self.p1 - &self.p0).cross(vec)).normalize(),
                         color: self.color.clone(),
                     })
                 } else {
@@ -130,9 +130,9 @@ impl Shape for Sphere {
         let new_center = self.center + translation;
         let temp = &ray.origin - &new_center;
 
-        let a = ray.direction.dot(&ray.direction);
-        let b = 2.0 * ray.direction.dot(&temp);
-        let c = temp.dot(&temp) - self.radius * self.radius;
+        let a = ray.direction.dot(ray.direction);
+        let b = 2.0 * ray.direction.dot(temp);
+        let c = temp.dot(temp) - self.radius * self.radius;
 
         let discriminant = b * b - 4.0 * a * c;
         if discriminant > 0.0 {
@@ -147,7 +147,7 @@ impl Shape for Sphere {
                 let dir = t * &ray.direction;
                 let point = &ray.origin + &dir;
                 let normal = &point - &new_center;
-                let normal = normal.unit();
+                let normal = normal.normalize();
                 let delta = &point - &new_center;
                 let theta = (delta.z / self.radius).acos();
                 let phi = f32::atan2(delta.y, delta.x);

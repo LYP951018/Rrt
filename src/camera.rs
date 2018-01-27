@@ -1,4 +1,4 @@
-use vectors::{Vector2, Vector3};
+use vectors::*;
 use shapes::Ray;
 
 #[derive(Debug, Clone)]
@@ -12,11 +12,11 @@ impl ThinLens {
     fn refract(&self, ray: &Ray, hit_pos: Vector3, s: f32) -> Ray {
         let i = s * self.focal_length / (s - self.focal_length);
         let dir = &self.center - &ray.origin;
-        let distance = dir.length() * s / i;
-        let dest = &dir.unit() * distance + &self.center;
+        let distance = dir.magnitude() * s / i;
+        let dest = &dir.normalize() * distance + &self.center;
         Ray {
             origin: hit_pos.clone(),
-            direction: (&dest - &hit_pos).unit(),
+            direction: (&dest - &hit_pos).normalize(),
         }
     }
 }
@@ -42,10 +42,10 @@ pub struct CameraBuilder {
 
 impl CameraBuilder {
     pub fn build(&self) -> Camera {
-        let up = self.up.unit();
-        let n = (&self.target - &self.at).unit();
-        let u = n.cross(&up);
-        let v = u.cross(&n);
+        let up = self.up.normalize();
+        let n = (&self.target - &self.at).normalize();
+        let u = n.cross(up);
+        let v = u.cross(n);
         let origin = &self.at + &n * self.lens.focal_length;
         let half_width = self.fov.tan();
         let half_height = half_width / self.aspect_ratio;
@@ -70,7 +70,7 @@ impl Camera {
         let ux = lens_pos.x * 2.0 * lens.radius;
         let uy = lens_pos.y * 2.0 * lens.radius;
         let lens_pos = &self.u * ux + &self.v * uy + &lens.center;
-        let new_dir = (&pos - &lens_pos).unit();
+        let new_dir = (&pos - &lens_pos).normalize();
         Ray {
             origin: lens_pos,
             direction: new_dir,

@@ -10,7 +10,7 @@ use std::fs::File;
 
 fn main() {
     let img = ImageBuffer::from_fn(500, 500, |x, y| {
-        let n = noise::perlin::noise(&Vector3::new(x as f32 / 32.0, y as f32 / 32.0, 0.0));
+        let n = noise::perlin_noise(&Vector3::new(x as f32 / 32.0, y as f32 / 32.0, 0.0));
         image::Rgb::from(Rgb::white() * ((n + 1.0) / 2.0))
     });
 
