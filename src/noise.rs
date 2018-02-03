@@ -1,5 +1,4 @@
-use vectors::{Vector2, Vector3};
-use util::lerp;
+use math::{Vector3, Vector2, lerp};
 use rgb::Rgb;
 use texture::Texture;
 

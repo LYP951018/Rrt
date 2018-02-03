@@ -1,4 +1,4 @@
-use vectors::*;
+use math::{InnerSpace, Vector3, Vector2};
 use shapes::Ray;
 
 #[derive(Debug, Clone)]

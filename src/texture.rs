@@ -1,8 +1,7 @@
 extern crate image;
 
 use rgb::Rgb;
-use vectors::{Vector2, Vector3};
-use util::lerp;
+use math::*;
 use self::image::{ImageBuffer};
 
 pub trait Texture {

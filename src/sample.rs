@@ -1,7 +1,7 @@
 extern crate rand;
 
 use self::rand::Rng;
-use vectors::Vector2;
+use math::Vector2;
 
 pub fn random<T: Rng>(rng: &mut T, samples: u32) -> Vec<Vector2> {
     rng.gen_iter().take(samples as usize).collect()
