@@ -1,5 +1,7 @@
 use math::{make_pos, InnerSpace, Matrix, Vector3};
 use {HitRecord, Ray, Shape};
+use std::rc::Rc;
+use super::super::vertices::Vertex;
 
 pub struct Triangle {
     pub p0: Vector3,
@@ -66,5 +68,28 @@ impl Shape for Triangle {
                 }
             }
         }
+    }
+}
+
+pub struct MeshTriangle<T: Vertex> {
+    mesh: Rc<[T]>,
+    points: [usize; 3],
+}
+
+impl<T: Vertex> MeshTriangle<T> {
+    fn as_triangle(&self) -> Triangle {
+        let points = &self.points;
+        let mesh = &self.mesh;
+        Triangle {
+            p0: *mesh[points[0]].get_pos(),
+            p1: *mesh[points[1]].get_pos(),
+            p2: *mesh[points[2]].get_pos(),
+        }
+    }
+}
+
+impl<T: Vertex> Shape for MeshTriangle<T> {
+    fn hit(&self, ray: &Ray, tmin: f32, tmax: f32, transform: &Matrix) -> Option<HitRecord> {
+        self.as_triangle().hit(ray, tmin, tmax, transform)
     }
 }

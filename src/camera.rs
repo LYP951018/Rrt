@@ -1,5 +1,5 @@
-use math::{InnerSpace, Vector3, Vector2};
-use shapes::Ray;
+use math::{InnerSpace, Vector2, Vector3};
+use shapes::{Ray, RayBuilder};
 
 #[derive(Debug, Clone)]
 pub struct ThinLens {
@@ -14,10 +14,10 @@ impl ThinLens {
         let dir = &self.center - &ray.origin;
         let distance = dir.magnitude() * s / i;
         let dest = &dir.normalize() * distance + &self.center;
-        Ray {
+        RayBuilder {
             origin: hit_pos.clone(),
             direction: (&dest - &hit_pos).normalize(),
-        }
+        }.build()
     }
 }
 
@@ -71,37 +71,46 @@ impl Camera {
         let uy = lens_pos.y * 2.0 * lens.radius;
         let lens_pos = &self.u * ux + &self.v * uy + &lens.center;
         let new_dir = (&pos - &lens_pos).normalize();
-        Ray {
+        RayBuilder {
             origin: lens_pos,
             direction: new_dir,
-        }
+        }.build()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use basic::*;
+    use super::*;
+    use math::*;
     #[test]
     fn refract() {
-        let thinLens = ThinLens::new(20.0, Vector3::zero(), 5.0);
-        let mut ray = Ray {
-            origin: Vector3::new(0.0, 0.0, 2.0),
-            direction: Vector3::new(-1.0, 0.0, 0.0),
+        let thinLens = ThinLens {
+            radius: 20.0,
+            center: Vector3::zero(),
+            focal_length: 5.0,
         };
+        let mut ray = RayBuilder {
+            origin: vec3(0.0, 0.0, 2.0),
+            direction: vec3(-1.0, 0.0, 0.0),
+        }.build();
         let ray = thinLens.refract(&ray, Vector3::zero(), 10.0);
         assert_eq!(ray.origin, Vector3::zero());
-        assert_eq!(ray.direction, Vector3::new(0.0, 0.0, -1.0));
+        assert_eq!(ray.direction, vec3(0.0, 0.0, -1.0));
     }
 
     #[test]
     fn refract_normal() {
-        let thinLens = ThinLens::new(20.0, Vector3::zero(), 2.5);
-        let mut ray = Ray {
-            origin: Vector3::new(5.0, 5.0, 0.0),
-            direction: Vector3::new(-1.0, 0.0, 0.0),
+        let thinLens = ThinLens {
+            radius: 20.0,
+            center: Vector3::zero(),
+            focal_length: 2.5,
         };
-        let ray = thinLens.refract(&ray, Vector3::new(0.0, 5.0, 0.0), 5.0);
-        assert_eq!(ray.origin, Vector3::new(0.0, 5.0, 0.0));
-        assert_eq!(ray.direction, Vector3::new(-5.0, -10.0, 0.0).unit());
+        let mut ray = RayBuilder {
+            origin: vec3(5.0, 5.0, 0.0),
+            direction: vec3(-1.0, 0.0, 0.0),
+        }.build();
+        let ray = thinLens.refract(&ray, vec3(0.0, 5.0, 0.0), 5.0);
+        relative_eq!(ray.origin, vec3(0.0, 5.0, 0.0));
+        relative_eq!(ray.direction, vec3(-5.0, -10.0, 0.0).normalize());
     }
 }

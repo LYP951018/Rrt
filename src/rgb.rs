@@ -1,6 +1,6 @@
 extern crate image;
 
-use std::ops::{Add, Sub, Div, Mul};
+use std::ops::{Add, Div, Mul, Sub, AddAssign};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Rgb {
@@ -14,6 +14,12 @@ impl<'a, 'b> Add<&'b Rgb> for &'a Rgb {
 
     fn add(self, rhs: &'b Rgb) -> Self::Output {
         Rgb::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+    }
+}
+
+impl AddAssign for Rgb {
+    fn add_assign(&mut self, rhs: Rgb) {
+        *self = *self + rhs;
     }
 }
 
@@ -62,7 +68,7 @@ impl Rgb {
         Rgb {
             r: 1.0,
             g: 1.0,
-            b: 1.0
+            b: 1.0,
         }
     }
 
@@ -84,5 +90,11 @@ impl From<image::Rgb<u8>> for Rgb {
     fn from(original: image::Rgb<u8>) -> Rgb {
         let u82r = |u: u8| -> f32 { u as f32 / 255.0 };
         Rgb::new(u82r(original[0]), u82r(original[1]), u82r(original[2]))
+    }
+}
+
+impl Default for Rgb {
+    fn default() -> Self {
+        Rgb::black()
     }
 }

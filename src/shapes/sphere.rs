@@ -42,7 +42,7 @@ impl Shape for Sphere {
                 let point = &ray_origin + &dir;
                 let normal = &point - &center;
                 let normal = normal.normalize();
-                let delta = &point - &center;
+                // let delta = &point - &center;
                 // let theta = (delta.z / self.radius).acos();
                 // let phi = f32::atan2(delta.y, delta.x);
                 Some(HitRecord {
